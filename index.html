@@ -3,221 +3,245 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Poster – Camera or Gallery (Root PNGs)</title>
+<title>Poster Generator</title>
 
 <style>
-  body { margin:0; font-family:system-ui, Arial; background:#120028; color:#fff; }
-  .bar { display:flex; gap:10px; padding:12px; flex-wrap:wrap; align-items:center; justify-content:center; }
-  .thumbs { display:flex; gap:10px; padding:0 12px 12px; flex-wrap:wrap; justify-content:center; }
-  .thumb { position:relative; width:90px; height:160px; border-radius:10px; overflow:hidden; border:2px solid #555; cursor:pointer; }
-  .thumb img { width:100%; height:100%; object-fit:cover; display:block; }
-  .thumb input { position:absolute; inset:0; opacity:0; cursor:pointer; }
-  .thumb.active { border-color:#ffa500; box-shadow:0 0 0 3px rgba(255,165,0,0.35); }
+body{
+margin:0;
+font-family:system-ui,Arial;
+background:#120028;
+color:#fff;
+}
 
-  input[type="text"], button {
-    font-size:16px; padding:10px; border:none; border-radius:10px;
-    background:#2f085a; color:#fff;
-  }
+.bar{
+display:flex;
+gap:10px;
+padding:12px;
+flex-wrap:wrap;
+align-items:center;
+justify-content:center;
+}
 
-  .btn { background:#ffa500; color:#230044; font-weight:700; }
+input[type="text"],button{
+font-size:16px;
+padding:10px;
+border:none;
+border-radius:10px;
+background:#2f085a;
+color:#fff;
+}
 
-  .stage { display:grid; place-items:center; padding:10px; }
+.btn{
+background:#ffa500;
+color:#230044;
+font-weight:700;
+}
 
-  canvas {
-    width:min(94vw,420px);
-    height:calc(min(94vw,420px) * 1920 / 1080);
-    border-radius:14px;
-    background:#0d001a;
-    box-shadow:0 8px 24px rgba(0,0,0,0.35);
-  }
+.stage{
+display:grid;
+place-items:center;
+padding:10px;
+}
+
+canvas{
+width:min(94vw,420px);
+height:calc(min(94vw,420px)*1920/1080);
+border-radius:14px;
+background:#0d001a;
+box-shadow:0 8px 24px rgba(0,0,0,0.35);
+}
 </style>
 </head>
 
 <body>
 
 <div class="bar">
-  <button class="btn" id="btnCamera">Take Photo</button>
-  <button class="btn" id="btnGallery">Upload From Gallery</button>
-  <input id="inputCamera" type="file" accept="image/*" capture="environment" style="display:none">
-  <input id="inputGallery" type="file" accept="image/*" style="display:none">
-  <label>Name <input id="nameInput" type="text" placeholder="Type name (optional)"></label>
-  <button class="btn" id="saveBtn">Download</button>
-</div>
 
-<div class="thumbs" id="thumbs">
-  <label class="thumb active" data-src="3.png">
-    <img src="3.png" alt="3">
-    <input type="radio" name="poster" value="3.png" checked>
-  </label>
-  <label class="thumb" data-src="5.png">
-    <img src="5.png" alt="5">
-    <input type="radio" name="poster" value="5.png">
-  </label>
-  <label class="thumb" data-src="7.png">
-    <img src="7.png" alt="7">
-    <input type="radio" name="poster" value="7.png">
-  </label>
-  <label class="thumb" data-src="8.png">
-    <img src="8.png" alt="8">
-    <input type="radio" name="poster" value="8.png">
-  </label>
+<button class="btn" id="btnCamera">Take Photo</button>
+
+<button class="btn" id="btnGallery">Upload From Gallery</button>
+
+<input id="inputCamera" type="file" accept="image/*" capture="environment" style="display:none">
+
+<input id="inputGallery" type="file" accept="image/*" style="display:none">
+
+<label>
+Name
+<input id="nameInput" type="text" placeholder="Type name (optional)">
+</label>
+
+<button class="btn" id="saveBtn">Download</button>
+
 </div>
 
 <div class="stage">
-  <canvas id="cv" width="1080" height="1920"></canvas>
+<canvas id="cv" width="1080" height="1920"></canvas>
 </div>
 
 <script>
 (() => {
 
-  const W=1080, H=1920;
+const W = 1080
+const H = 1920
 
-  // 🔥 Increased square size
-  const CX=540, CY=960, R=260;
+const CX = 540
+const CY = 960
+const R = 260
 
-  const NAME_Y = CY + R + 90;
-  const NAME_FONT_PX = 70;   // 🔥 Font limited to 70px
+const NAME_Y = CY + R + 90
+const NAME_FONT_PX = 65
 
-  const cv = document.getElementById('cv');
-  const ctx = cv.getContext('2d');
+const cv = document.getElementById("cv")
+const ctx = cv.getContext("2d")
 
-  const thumbs = document.getElementById('thumbs');
-  const btnCamera = document.getElementById('btnCamera');
-  const btnGallery = document.getElementById('btnGallery');
-  const inputCamera = document.getElementById('inputCamera');
-  const inputGallery = document.getElementById('inputGallery');
-  const nameInput  = document.getElementById('nameInput');
-  const saveBtn    = document.getElementById('saveBtn');
+const btnCamera = document.getElementById("btnCamera")
+const btnGallery = document.getElementById("btnGallery")
+const inputCamera = document.getElementById("inputCamera")
+const inputGallery = document.getElementById("inputGallery")
+const nameInput = document.getElementById("nameInput")
+const saveBtn = document.getElementById("saveBtn")
 
-  let posterSrc = '3.png';
-  let posterImg=null;
-  let photoImg=null;
+let posterImg = null
+let photoImg = null
 
-  function loadImage(src){
-    return new Promise((res, rej)=>{
-      const i=new Image();
-      i.onload=()=>res(i);
-      i.onerror=()=>rej('fail '+src);
-      i.src=src;
-    });
-  }
+function loadImage(src){
+return new Promise((res,rej)=>{
+const i = new Image()
+i.onload = () => res(i)
+i.onerror = () => rej()
+i.src = src
+})
+}
 
-  async function setPoster(src){
-    posterSrc = src;
-    try { posterImg = await loadImage(src); }
-    catch { posterImg = null; }
-    draw();
-  }
+function autoNameFromFile(file){
+if(!file) return ""
 
-  function autoNameFromFile(file){
-    if (!file) return '';
-    const base = (file.name||'')
-      .replace(/\.[^.]+$/,'')
-      .replace(/[_-]+/g,' ')
-      .trim();
-    return base.split(' ')
-      .map(w=>w?w[0].toUpperCase()+w.slice(1):'')
-      .join(' ');
-  }
+const base = file.name
+.replace(/\.[^.]+$/,"")
+.replace(/[_-]+/g," ")
+.trim()
 
-  function draw(){
+return base.split(" ")
+.map(w => w ? w[0].toUpperCase()+w.slice(1) : "")
+.join(" ")
+}
 
-    if (posterImg) ctx.drawImage(posterImg, 0, 0, W, H);
-    else {
-      ctx.fillStyle='#2b0063';
-      ctx.fillRect(0,0,W,H);
-    }
+async function initPoster(){
+posterImg = await loadImage("3.png")
+draw()
+}
 
-    // 🔥 Square Photo Area
-    if (photoImg){
-      ctx.save();
-      ctx.beginPath();
-      ctx.rect(CX - R, CY - R, 2 * R, 2 * R);
-      ctx.closePath();
-      ctx.clip();
+function draw(){
 
-      const bw=2*R, bh=2*R;
-      const a=photoImg.width/photoImg.height;
-      const ab=bw/bh;
+if(posterImg)
+ctx.drawImage(posterImg,0,0,W,H)
 
-      let dw, dh;
-      if (a>ab){ dh=bh; dw=dh*a; }
-      else { dw=bw; dh=dw/a; }
+if(photoImg){
 
-      ctx.drawImage(photoImg, CX-dw/2, CY-dh/2, dw, dh);
-      ctx.restore();
-    }
+ctx.save()
 
-    // 🔥 Mauve Border
-    ctx.lineWidth = 8;
-    ctx.strokeStyle = '#E0B0FF';
-    ctx.strokeRect(CX - R, CY - R, 2 * R, 2 * R);
+ctx.beginPath()
+ctx.rect(CX-R,CY-R,2*R,2*R)
+ctx.closePath()
+ctx.clip()
 
-    // 🔥 Name Below
-    const name=(nameInput.value||'').trim();
-    if (name){
-      ctx.font=`800 ${NAME_FONT_PX}px Arial, sans-serif`;
-      ctx.fillStyle='#fff';
-      ctx.textAlign='center';
-      ctx.textBaseline='middle';
-      ctx.shadowColor='rgba(0,0,0,0.55)';
-      ctx.shadowBlur=10;
-      ctx.fillText(name, W/2, NAME_Y);
-      ctx.shadowBlur=0;
-    }
-  }
+const bw = 2*R
+const bh = 2*R
 
-  thumbs.addEventListener('change', e=>{
-    const input=e.target;
-    if (input && input.name==='poster'){
-      [...thumbs.querySelectorAll('.thumb')]
-        .forEach(t=>t.classList.remove('active'));
-      input.closest('.thumb').classList.add('active');
-      setPoster(input.value);
-    }
-  });
+const a = photoImg.width/photoImg.height
+const ab = bw/bh
 
-  btnCamera.addEventListener('click', ()=> inputCamera.click());
-  btnGallery.addEventListener('click', ()=> inputGallery.click());
+let dw,dh
 
-  function handleFileInput(file){
-    if(!file){ photoImg=null; draw(); return; }
+if(a>ab){
+dh = bh
+dw = dh*a
+}
+else{
+dw = bw
+dh = dw/a
+}
 
-    const r=new FileReader();
-    r.onload=async e=>{
-      try{ photoImg=await loadImage(e.target.result); }
-      catch{ photoImg=null; }
+ctx.drawImage(photoImg,CX-dw/2,CY-dh/2,dw,dh)
 
-      if(!nameInput.value)
-        nameInput.value=autoNameFromFile(file);
+ctx.restore()
 
-      draw();
-    };
+}
 
-    r.readAsDataURL(file);
-  }
+ctx.lineWidth = 8
+ctx.strokeStyle = "#E0B0FF"
+ctx.strokeRect(CX-R,CY-R,2*R,2*R)
 
-  inputCamera.addEventListener('change',
-    ()=> handleFileInput(inputCamera.files[0])
-  );
+const name = (nameInput.value||"").trim()
 
-  inputGallery.addEventListener('change',
-    ()=> handleFileInput(inputGallery.files[0])
-  );
+if(name){
 
-  nameInput.addEventListener('input', draw);
+ctx.font = `800 ${NAME_FONT_PX}px Arial`
+ctx.fillStyle = "#fff"
+ctx.textAlign = "center"
+ctx.textBaseline = "middle"
 
-  saveBtn.addEventListener('click', ()=>{
-    const a=document.createElement('a');
-    const who=(nameInput.value||'user').replace(/\s+/g,'_');
-    a.download=`poster_${posterSrc.replace('.png','')}_${who}.png`;
-    a.href=cv.toDataURL('image/png');
-    a.click();
-  });
+ctx.shadowColor = "rgba(0,0,0,0.55)"
+ctx.shadowBlur = 10
 
-  setPoster(posterSrc);
+ctx.fillText(name,W/2,NAME_Y)
 
-})();
+ctx.shadowBlur = 0
+
+}
+
+}
+
+btnCamera.onclick = () => inputCamera.click()
+btnGallery.onclick = () => inputGallery.click()
+
+function handleFile(file){
+
+if(!file){
+photoImg = null
+draw()
+return
+}
+
+const r = new FileReader()
+
+r.onload = async e => {
+
+photoImg = await loadImage(e.target.result)
+
+if(!nameInput.value)
+nameInput.value = autoNameFromFile(file)
+
+draw()
+
+}
+
+r.readAsDataURL(file)
+
+}
+
+inputCamera.onchange = () => handleFile(inputCamera.files[0])
+inputGallery.onchange = () => handleFile(inputGallery.files[0])
+
+nameInput.oninput = draw
+
+saveBtn.onclick = () => {
+
+const a = document.createElement("a")
+
+const who = (nameInput.value||"user").replace(/\s+/g,"_")
+
+a.download = `poster_${who}.png`
+
+a.href = cv.toDataURL("image/png")
+
+a.click()
+
+}
+
+initPoster()
+
+})()
 </script>
 
 </body>
