@@ -86,10 +86,14 @@ const H = 1920
 
 const CX = 540
 const CY = 960
-const R = 260
+
+/* increased square size */
+const R = 290
 
 const NAME_Y = CY + R + 90
-const NAME_FONT_PX = 65
+
+/* reduced font size by 5 */
+const NAME_FONT_PX = 60
 
 const cv = document.getElementById("cv")
 const ctx = cv.getContext("2d")
@@ -168,6 +172,7 @@ ctx.restore()
 
 }
 
+/* Mauve border */
 ctx.lineWidth = 8
 ctx.strokeStyle = "#E0B0FF"
 ctx.strokeRect(CX-R,CY-R,2*R,2*R)
@@ -177,7 +182,10 @@ const name = (nameInput.value||"").trim()
 if(name){
 
 ctx.font = `800 ${NAME_FONT_PX}px Arial`
-ctx.fillStyle = "#fff"
+
+/* MAGENTA TEXT */
+ctx.fillStyle = "#FF00FF"
+
 ctx.textAlign = "center"
 ctx.textBaseline = "middle"
 
